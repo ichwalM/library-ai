@@ -1,0 +1,29 @@
+steps:
+  # 1. Build Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/library-ai-app:$COMMIT_SHA', '.']
+
+  # 2. Push Docker image ke Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/library-ai-app:$COMMIT_SHA']
+
+  # 3. Deploy image ke Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'library-ai-app'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/library-ai-app:$COMMIT_SHA'
+      - '--region'
+      - 'asia-southeast2'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      # Sesuaikan nama secret jika menggunakan Secret Manager
+      - '--set-secrets'
+      - '/app/.env=LIBRARIAI_ENV:latest'
+
+images:
+  - 'gcr.io/$PROJECT_ID/library-ai-app:$COMMIT_SHA'

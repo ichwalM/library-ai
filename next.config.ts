@@ -20,6 +20,9 @@ const nextConfig: NextConfig = {
     deviceSizes: [640, 768, 1024, 1280, 1920],
   },
 
+  // ─── Deployment ────────────────────────────────────────────────────────────
+  output: "standalone",
+
   // ─── Performance: Compression ──────────────────────────────────────────────
   compress: true,
 
