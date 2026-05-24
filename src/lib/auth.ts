@@ -13,20 +13,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientSecret: process.env.AUTH_GOOGLE_SECRET!,
     }),
   ],
+  session: { strategy: "jwt" },
   pages: {
     signIn: "/login",
   },
   callbacks: {
-    async session({ session, user }) {
-      if (session.user) {
-        session.user.id = user.id;
-        session.user.role = adminEmails.includes(user.email) ? "admin" : "user";
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.role = adminEmails.includes(user.email ?? "") ? "admin" : "user";
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user && token) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
       }
       return session;
     },
-    async signIn({ user }) {
-      // Allow all Google sign-ins; role assignment happens in session callback
-      return true;
-    },
   },
+  trustHost: true,
 });

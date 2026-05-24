@@ -2,10 +2,6 @@ import { GoogleGenAI } from "@google/genai";
 
 const apiKey = process.env.GEMINI_API_KEY;
 
-if (!apiKey) {
-  console.warn("GEMINI_API_KEY is not set");
-}
-
 export const genai = new GoogleGenAI({ apiKey: apiKey || "" });
 
 /**
@@ -13,7 +9,7 @@ export const genai = new GoogleGenAI({ apiKey: apiKey || "" });
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
   const response = await genai.models.embedContent({
-    model: "gemini-embedding-exp-03-07",
+    model: "gemini-embedding-001",
     contents: text,
   });
 
@@ -42,8 +38,7 @@ export function cosineSimilarity(vecA: number[], vecB: number[]): number {
 }
 
 /**
- * Split text into chunks of approximately `chunkSize` characters
- * with `overlap` characters of overlap between chunks
+ * Split text into chunks of approximately chunkSize characters with overlap
  */
 export function chunkText(
   text: string,
