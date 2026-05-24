@@ -36,15 +36,18 @@ model Account {
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([provider, providerAccountId])
+  @@index([userId], map: "Account_userId_fkey")
 }
 
 model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "Session_userId_fkey")
 }
 
 model VerificationToken {
@@ -74,15 +77,17 @@ model Document {
   status     String   @default("processing")
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   chunks     Chunk[]
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([categoryId], map: "Document_categoryId_fkey")
 }
 
 model Chunk {
   id         String   @id @default(cuid())
   documentId String
   content    String   @db.LongText
-  embedding  Json
+  embedding  String   @db.LongText
   chunkIndex Int      @default(0)
   createdAt  DateTime @default(now())
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
