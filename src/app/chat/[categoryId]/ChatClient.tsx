@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
 type Message = {
   id: string;
   role: "user" | "assistant";
@@ -18,6 +19,7 @@ interface Props {
   userName: string;
 }
 
+// ─── Starter questions ────────────────────────────────────────────────────────
 const STARTER_QUESTIONS = [
   "Apa ringkasan dari dokumen ini?",
   "Apa poin-poin utama yang dibahas?",
@@ -25,27 +27,151 @@ const STARTER_QUESTIONS = [
   "Apakah ada definisi atau istilah khusus?",
 ];
 
+// ─── Markdown-like formatter (safe, no library needed) ───────────────────────
+function formatContent(text: string): string {
+  return (
+    text
+      // Code blocks (before inline code)
+      .replace(
+        /```([\s\S]*?)```/g,
+        "<pre><code>$1</code></pre>"
+      )
+      // Inline code
+      .replace(/`([^`]+)`/g, "<code>$1</code>")
+      // Bold
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      // Italic
+      .replace(/\*(.*?)\*/g, "<em>$1</em>")
+      .replace(/_(.*?)_/g, "<em>$1</em>")
+      // Unordered list items
+      .replace(/^[-•] (.+)$/gm, "<li>$1</li>")
+      // Ordered list items
+      .replace(/^\d+\. (.+)$/gm, "<li>$1</li>")
+      // Wrap consecutive <li> in <ul>
+      .replace(/(<li>.*<\/li>\n?)+/g, (m) => `<ul>${m}</ul>`)
+      // Paragraphs — double newline
+      .replace(/\n\n/g, "</p><p>")
+      // Single newline
+      .replace(/\n/g, "<br/>")
+      // Wrap all in <p> if not already block-level
+      .replace(/^(?!<(ul|ol|pre|h[1-6]|li))(.+)/, "<p>$2</p>")
+  );
+}
+
+function formatTime(date: Date): string {
+  return date.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+}
+
+// ─── Avatar ───────────────────────────────────────────────────────────────────
+function UserAvatar({ image, name }: { image: string | null; name: string }) {
+  if (image) {
+    return (
+      <Image
+        src={image}
+        alt={name}
+        width={32}
+        height={32}
+        className="w-8 h-8 border-2 border-neo-black flex-shrink-0 object-cover"
+      />
+    );
+  }
+  return (
+    <div className="chat-avatar-user">
+      {name[0]?.toUpperCase() ?? "U"}
+    </div>
+  );
+}
+
+function AiAvatar() {
+  return (
+    <div className="chat-avatar-ai" aria-hidden="true">
+      AI
+    </div>
+  );
+}
+
+// ─── Message Bubble ───────────────────────────────────────────────────────────
+function MessageBubble({ msg, userName, userImage }: { msg: Message; userName: string; userImage: string | null }) {
+  const isUser = msg.role === "user";
+
+  return (
+    <div
+      className={`chat-message-row ${isUser ? "chat-message-row--user" : "chat-message-row--ai"}`}
+    >
+      {/* AI Avatar — left side */}
+      {!isUser && <AiAvatar />}
+
+      <div className={`chat-bubble-group ${isUser ? "chat-bubble-group--user" : ""}`}>
+        {/* Sender + time */}
+        <div className={`chat-meta ${isUser ? "chat-meta--user" : ""}`}>
+          {isUser ? userName : "LibrariAI"}
+          <span className="chat-meta-time">{formatTime(msg.timestamp)}</span>
+        </div>
+
+        {/* Bubble */}
+        <div
+          className={isUser ? "chat-bubble-user" : "chat-bubble-ai"}
+          dangerouslySetInnerHTML={{ __html: formatContent(msg.content) }}
+        />
+      </div>
+
+      {/* User Avatar — right side */}
+      {isUser && <UserAvatar image={userImage} name={userName} />}
+    </div>
+  );
+}
+
+// ─── Typing Indicator ─────────────────────────────────────────────────────────
+function TypingIndicator() {
+  return (
+    <div className="chat-message-row chat-message-row--ai" aria-live="polite" aria-label="LibrariAI sedang mengetik">
+      <AiAvatar />
+      <div className="chat-bubble-group">
+        <div className="chat-meta">LibrariAI</div>
+        <div className="chat-bubble-ai chat-bubble-ai--typing">
+          <span className="typing-dot" />
+          <span className="typing-dot" />
+          <span className="typing-dot" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function ChatClient({ category, docCount, userImage, userName }: Props) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
       role: "assistant",
-      content: `Halo! Saya siap membantu kamu menjelajahi koleksi **"${category.title}"**.\n\nKoleksi ini memiliki **${docCount} dokumen** yang siap diakses. Tanyakan apa saja tentang isinya, dan saya akan menjawab berdasarkan dokumen yang tersedia.\n\n⚡ _Zero Hallucination Protocol aktif — saya hanya menjawab dari sumber dokumen._`,
+      content: `Halo! Saya siap membantu kamu menjelajahi koleksi **"${category.title}"**.\n\nKoleksi ini memiliki **${docCount} dokumen** yang siap diakses. Tanyakan apa saja tentang isinya, dan saya akan menjawab berdasarkan dokumen yang tersedia.\n\n⚡ *Zero Hallucination Protocol aktif — saya hanya menjawab dari sumber dokumen.*`,
       timestamp: new Date(),
     },
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showStarters, setShowStarters] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  // Auto-scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isLoading]);
 
-  const sendMessage = async (content: string) => {
-    if (!content.trim() || isLoading) return;
+  // Auto-resize textarea
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+    e.target.style.height = "auto";
+    e.target.style.height = Math.min(e.target.scrollHeight, 160) + "px";
+  };
+
+  const sendMessage = useCallback(async (content: string) => {
+    if (!content.trim() || isLoading || docCount === 0) return;
+
+    setShowStarters(false);
 
     const userMsg: Message = {
       id: `u-${Date.now()}`,
@@ -59,7 +185,11 @@ export default function ChatClient({ category, docCount, userImage, userName }: 
     setIsLoading(true);
     setError("");
 
-    // Prepare history for API (exclude welcome message)
+    // Reset textarea height
+    if (inputRef.current) {
+      inputRef.current.style.height = "auto";
+    }
+
     const apiMessages = [...messages.filter((m) => m.id !== "welcome"), userMsg].map((m) => ({
       role: m.role,
       content: m.content,
@@ -74,7 +204,7 @@ export default function ChatClient({ category, docCount, userImage, userName }: 
 
       if (!res.ok) {
         const errData = await res.json();
-        throw new Error(errData.error || "Gagal mendapatkan respons");
+        throw new Error(errData.error || "Gagal mendapatkan respons dari server.");
       }
 
       const data = await res.json();
@@ -86,12 +216,12 @@ export default function ChatClient({ category, docCount, userImage, userName }: 
       };
       setMessages((prev) => [...prev, aiMsg]);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Terjadi kesalahan");
+      setError(e instanceof Error ? e.message : "Terjadi kesalahan. Coba lagi.");
     } finally {
       setIsLoading(false);
-      inputRef.current?.focus();
+      setTimeout(() => inputRef.current?.focus(), 50);
     }
-  };
+  }, [isLoading, messages, category.id, docCount]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -100,161 +230,174 @@ export default function ChatClient({ category, docCount, userImage, userName }: 
     }
   };
 
-  // Format message content with basic markdown-like rendering
-  const formatContent = (content: string) => {
-    return content
-      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-      .replace(/_(.*?)_/g, "<em>$1</em>")
-      .replace(/\n/g, "<br/>");
-  };
-
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
-  };
+  const canSend = !isLoading && input.trim().length > 0 && docCount > 0;
+  const charCount = input.length;
 
   return (
-    <div className="flex flex-col h-screen bg-neo-gray">
-      {/* ─── HEADER ─── */}
-      <header className="border-b-4 border-neo-black bg-white flex-shrink-0">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-4">
-          <Link href="/browse" className="neo-button neo-button-ghost neo-button-sm flex-shrink-0">
-            ← Kembali
+    <div className="chat-shell">
+      {/* ═══ HEADER ═══════════════════════════════════════════════════════════ */}
+      <header className="chat-header" role="banner">
+        <div className="chat-header-inner">
+          {/* Back button */}
+          <Link
+            href="/browse"
+            className="neo-button neo-button-ghost neo-button-sm flex-shrink-0"
+            aria-label="Kembali ke halaman browse"
+          >
+            ← <span className="hidden sm:inline">Kembali</span>
           </Link>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-xl">📖</span>
-              <h1 className="font-mono font-bold text-lg truncate">{category.title}</h1>
+
+          {/* Category info */}
+          <div className="chat-header-info">
+            <div className="chat-header-title">
+              <span className="chat-header-icon" aria-hidden="true">📖</span>
+              <h1 className="chat-header-name">{category.title}</h1>
             </div>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="neo-badge neo-badge-green text-xs">{docCount} dokumen siap</span>
-              <span className="neo-badge neo-badge-black text-xs">ZERO HALLUCINATION ✓</span>
+            <div className="chat-header-badges">
+              <span className="neo-badge neo-badge-green">
+                {docCount} dok
+              </span>
+              <span className="neo-badge neo-badge-black">
+                ⚡ ZERO HALLUCINATION
+              </span>
+              {docCount === 0 && (
+                <span className="neo-badge neo-badge-pink">
+                  ⚠ Belum ada dokumen
+                </span>
+              )}
             </div>
           </div>
 
           {/* User avatar */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {userImage ? (
-              <Image
-                src={userImage}
-                alt={userName}
-                width={32}
-                height={32}
-                className="border-2 border-neo-black"
-              />
-            ) : (
-              <div className="w-8 h-8 bg-neo-yellow border-2 border-neo-black flex items-center justify-center font-mono font-bold text-sm">
-                {userName[0]?.toUpperCase()}
-              </div>
-            )}
+          <div className="flex-shrink-0" aria-label={`Login sebagai ${userName}`}>
+            <UserAvatar image={userImage} name={userName} />
           </div>
         </div>
       </header>
 
-      {/* ─── MESSAGES ─── */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"} animate-fade-in`}
-            >
-              {/* Role label */}
-              <div className={`font-mono text-xs text-gray-500 mb-1 ${msg.role === "user" ? "text-right" : ""}`}>
-                {msg.role === "user" ? `${userName} · ${formatTime(msg.timestamp)}` : `LibrariAI · ${formatTime(msg.timestamp)}`}
-              </div>
+      {/* ═══ MESSAGES ══════════════════════════════════════════════════════════ */}
+      <div className="chat-messages-area" ref={messagesContainerRef} role="log" aria-live="polite" aria-label="Riwayat percakapan">
+        <div className="chat-messages-inner">
 
-              {/* Bubble */}
-              <div
-                className={msg.role === "user" ? "neo-bubble-user" : "neo-bubble-ai"}
-                dangerouslySetInnerHTML={{ __html: formatContent(msg.content) }}
-              />
+          {/* Empty state — no docs */}
+          {docCount === 0 && (
+            <div className="chat-empty-state">
+              <div className="chat-empty-icon" aria-hidden="true">📭</div>
+              <h2 className="chat-empty-title">Belum Ada Dokumen</h2>
+              <p className="chat-empty-desc">
+                Kategori ini belum memiliki dokumen. Minta admin untuk mengunggah dokumen terlebih dahulu.
+              </p>
+              <Link href="/browse" className="neo-button neo-button-yellow mt-4">
+                ← Pilih Kategori Lain
+              </Link>
             </div>
+          )}
+
+          {/* Messages */}
+          {messages.map((msg) => (
+            <MessageBubble
+              key={msg.id}
+              msg={msg}
+              userName={userName}
+              userImage={userImage}
+            />
           ))}
 
-          {/* Loading indicator */}
-          {isLoading && (
-            <div className="flex items-start gap-3 animate-fade-in">
-              <div className="neo-bubble-ai">
-                <div className="flex items-center gap-2">
-                  <div className="neo-loading">
-                    <span />
-                    <span />
-                    <span />
-                  </div>
-                  <span className="font-mono text-xs">LibrariAI sedang mencari...</span>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Loading / typing indicator */}
+          {isLoading && <TypingIndicator />}
 
-          {/* Error */}
+          {/* Error toast */}
           {error && (
-            <div className="neo-card p-3 bg-red-50 border-neo-pink animate-shake max-w-md mx-auto">
-              <p className="font-mono text-xs text-neo-pink font-bold">⚠ {error}</p>
+            <div className="chat-error animate-shake" role="alert">
+              <span aria-hidden="true">⚠</span> {error}
+              <button
+                onClick={() => setError("")}
+                className="chat-error-dismiss"
+                aria-label="Tutup pesan error"
+              >
+                ✕
+              </button>
             </div>
           )}
 
-          <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} aria-hidden="true" />
         </div>
       </div>
 
-      {/* ─── STARTER QUESTIONS (shown when only welcome message) ─── */}
-      {messages.length === 1 && (
-        <div className="flex-shrink-0 border-t-2 border-dashed border-gray-300">
-          <div className="max-w-4xl mx-auto px-4 py-3">
-            <p className="font-mono text-xs text-gray-500 mb-2">💡 PERTANYAAN AWAL:</p>
-            <div className="flex flex-wrap gap-2">
-              {STARTER_QUESTIONS.map((q) => (
-                <button
-                  key={q}
-                  onClick={() => sendMessage(q)}
-                  disabled={isLoading}
-                  className="neo-button neo-button-ghost neo-button-sm text-xs border-dashed"
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
+      {/* ═══ STARTER QUESTIONS ═════════════════════════════════════════════════ */}
+      {showStarters && messages.length === 1 && docCount > 0 && (
+        <div className="chat-starters" aria-label="Pertanyaan awal yang disarankan">
+          <p className="chat-starters-label">💡 Coba tanyakan:</p>
+          <div className="chat-starters-grid">
+            {STARTER_QUESTIONS.map((q) => (
+              <button
+                key={q}
+                onClick={() => sendMessage(q)}
+                disabled={isLoading}
+                className="chat-starter-btn"
+                aria-label={`Tanyakan: ${q}`}
+              >
+                {q}
+              </button>
+            ))}
           </div>
         </div>
       )}
 
-      {/* ─── INPUT BAR ─── */}
-      <div className="flex-shrink-0 border-t-4 border-neo-black bg-white">
-        <div className="max-w-4xl mx-auto px-4 py-3">
-          <div className="flex gap-3 items-end">
+      {/* ═══ INPUT BAR ═════════════════════════════════════════════════════════ */}
+      <div className="chat-input-bar" role="form" aria-label="Form input pesan">
+        <div className="chat-input-inner">
+          <div className="chat-input-wrapper">
             <textarea
               ref={inputRef}
+              id="chat-input"
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={handleTextareaChange}
               onKeyDown={handleKeyDown}
-              disabled={isLoading}
-              placeholder={docCount === 0 ? "Belum ada dokumen di kategori ini..." : "Ketik pertanyaanmu... (Enter untuk kirim, Shift+Enter baris baru)"}
+              disabled={isLoading || docCount === 0}
+              placeholder={
+                docCount === 0
+                  ? "Belum ada dokumen di kategori ini..."
+                  : "Ketik pertanyaanmu... (Enter kirim, Shift+Enter baris baru)"
+              }
               rows={1}
-              className="neo-textarea flex-1 min-h-[44px] max-h-32 resize-none py-2.5"
-              style={{ height: "auto" }}
-              onInput={(e) => {
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = "auto";
-                target.style.height = Math.min(target.scrollHeight, 128) + "px";
-              }}
+              className="chat-textarea"
+              maxLength={2000}
+              aria-label="Input pesan"
+              aria-disabled={isLoading || docCount === 0}
             />
-            <button
-              onClick={() => sendMessage(input)}
-              disabled={isLoading || !input.trim() || docCount === 0}
-              className={`neo-button neo-button-yellow flex-shrink-0 ${(isLoading || !input.trim() || docCount === 0) ? "opacity-50 cursor-not-allowed" : ""}`}
-            >
-              {isLoading ? (
-                <div className="neo-loading"><span /><span /><span /></div>
-              ) : (
-                "➤ Kirim"
-              )}
-            </button>
+
+            {/* Char count */}
+            {charCount > 0 && (
+              <div className={`chat-char-count ${charCount > 1800 ? "chat-char-count--warn" : ""}`}>
+                {charCount}/2000
+              </div>
+            )}
           </div>
-          <p className="font-mono text-xs text-gray-400 mt-2 text-center">
-            ⚡ Dijawab berdasarkan dokumen koleksi · Zero Hallucination Protocol aktif
-          </p>
+
+          {/* Send button */}
+          <button
+            onClick={() => sendMessage(input)}
+            disabled={!canSend}
+            className={`chat-send-btn ${canSend ? "chat-send-btn--active" : ""}`}
+            aria-label="Kirim pesan"
+          >
+            {isLoading ? (
+              <span className="neo-loading" aria-hidden="true">
+                <span /><span /><span />
+              </span>
+            ) : (
+              <span className="chat-send-icon" aria-hidden="true">➤</span>
+            )}
+            <span className="chat-send-label">{isLoading ? "..." : "Kirim"}</span>
+          </button>
         </div>
+
+        {/* Footer hint */}
+        <p className="chat-footer-hint">
+          <span aria-hidden="true">⚡</span> Dijawab berdasarkan dokumen koleksi · Zero Hallucination Protocol aktif
+          <span className="hidden sm:inline"> · Enter untuk kirim</span>
+        </p>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import "./globals.css";
+import "./globals.css"; // force HMR
 
 // ─── SEO & Metadata ─────────────────────────────────────────────────────────
 export const metadata: Metadata = {

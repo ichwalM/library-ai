@@ -153,10 +153,10 @@ async function HeroSection() {
                 <div className="font-mono font-bold text-2xl" aria-label="Zero persen halusinasi">0%</div>
                 <div className="text-sm text-gray-500 font-mono">Hallucination</div>
               </div>
-              <div className="border-l-4 border-neo-green pl-4">
+              {/* <div className="border-l-4 border-neo-green pl-4">
                 <div className="font-mono font-bold text-2xl">MySQL</div>
                 <div className="text-sm text-gray-500 font-mono">Backend</div>
-              </div>
+              </div> */}
             </div>
           </div>
 
@@ -171,26 +171,25 @@ async function HeroSection() {
                   <div className="w-3 h-3 rounded-full bg-neo-yellow border-2 border-neo-black" />
                   <div className="w-3 h-3 rounded-full bg-neo-green border-2 border-neo-black" />
                   <span className="font-mono text-xs text-white ml-2 opacity-60">
-                    chat / Hukum Perdata
+                    chat / Jaringan Komputer 
                   </span>
                 </div>
                 {/* Chat messages */}
                 <div className="p-4 space-y-4 bg-neo-gray min-h-64">
                   <div className="flex justify-end">
                     <div className="neo-bubble-user text-sm">
-                      Apa itu pasal 1234 KUHPerdata?
+                      Apa itu Jaringan Komputer?
                     </div>
                   </div>
                   <div className="flex justify-start">
                     <div className="neo-bubble-ai text-sm">
-                      Pasal 1234 KUHPerdata menetapkan tiga bentuk perikatan:
-                      memberikan sesuatu, berbuat sesuatu, atau tidak berbuat
-                      sesuatu...
+                      Jaringan Komputer adalah hubungan antara 2 komputer atau lebih yang terhubung
+                      dengan media transmisi kabel atau tanpa kabel (wireless).
                     </div>
                   </div>
                   <div className="flex justify-end">
                     <div className="neo-bubble-user text-sm">
-                      Berikan contoh kasusnya!
+                      Berikan contoh nya!
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -300,9 +299,9 @@ function Footer() {
         <div className="font-mono font-bold text-xl" aria-label="LibrariAI">
           LIBRARI<span className="text-neo-yellow">AI</span>
         </div>
-        <div className="font-mono text-sm text-gray-400">
-          © {new Date().getFullYear()} LibrariAI · Built with Next.js + Gemini
-        </div>
+        <Link href={"https://walldev.my.id/"} className="font-mono text-sm text-gray-400" target="_blank">
+          © {new Date().getFullYear()} LibrariAI <span>Ichwal</span> · Built with Next.js + Gemini
+        </Link>
         <nav className="flex gap-4" aria-label="Footer navigation">
           <Link href="/browse" className="neo-button neo-button-yellow neo-button-sm">
             Browse
