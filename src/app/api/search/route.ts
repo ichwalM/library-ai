@@ -38,17 +38,17 @@ export async function POST(req: NextRequest) {
 
     // Compute cosine similarity for each chunk
     const scored = chunks
-      .map((chunk) => {
+      .map((chunk: any) => {
         const embeddingArr = chunk.embedding as number[];
         const score = cosineSimilarity(queryEmbedding, embeddingArr);
         return {
-          id: chunk.id,
-          content: chunk.content,
-          fileName: chunk.document.fileName,
+          id: chunk.id as string,
+          content: chunk.content as string,
+          fileName: chunk.document.fileName as string,
           score,
         };
       })
-      .sort((a, b) => b.score - a.score)
+      .sort((a: { score: number }, b: { score: number }) => b.score - a.score)
       .slice(0, topK);
 
     return NextResponse.json({ results: scored });

@@ -23,6 +23,7 @@ const nextConfig: NextConfig = {
   // ─── Deployment ────────────────────────────────────────────────────────────
   output: "standalone",
 
+
   // ─── Performance: Compression ──────────────────────────────────────────────
   compress: true,
 
@@ -90,6 +91,8 @@ const nextConfig: NextConfig = {
   // These packages are used only server-side; exclude from client bundle
   serverExternalPackages: [
     "pdf-parse",
+    "pdfjs-dist",
+    "@napi-rs/canvas",
     "mammoth",
     "@prisma/client",
     "@prisma/adapter-mariadb",

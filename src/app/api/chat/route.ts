@@ -32,16 +32,16 @@ export async function POST(req: NextRequest) {
 
       if (chunks.length > 0) {
         const scored = chunks
-          .map((c) => ({
-            content: c.content,
-            fileName: c.document.fileName,
+          .map((c: any) => ({
+            content: c.content as string,
+            fileName: c.document.fileName as string,
             score: cosineSimilarity(queryEmbedding, c.embedding as number[]),
           }))
-          .sort((a, b) => b.score - a.score)
+          .sort((a: { score: number }, b: { score: number }) => b.score - a.score)
           .slice(0, 5);
 
         contextText = scored
-          .map((c) => `[Sumber: ${c.fileName}]\n${c.content}`)
+          .map((c: { fileName: string; content: string }) => `[Sumber: ${c.fileName}]\n${c.content}`)
           .join("\n\n---\n\n");
       }
     } catch (searchErr) {
