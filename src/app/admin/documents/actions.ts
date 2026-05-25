@@ -122,7 +122,7 @@ export async function uploadDocument(formData: FormData) {
           documentId: doc.id,
           content: chunks[i],
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          embedding: embedding as any,
+          embedding: JSON.stringify(embedding),
           chunkIndex: i,
         },
       });

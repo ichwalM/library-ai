@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     // Compute cosine similarity for each chunk
     const scored = chunks
       .map((chunk: any) => {
-        const embeddingArr = chunk.embedding as number[];
+        const embeddingArr = JSON.parse(chunk.embedding as string);
         const score = cosineSimilarity(queryEmbedding, embeddingArr);
         return {
           id: chunk.id as string,

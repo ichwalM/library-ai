@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
           .map((c: any) => ({
             content: c.content as string,
             fileName: c.document.fileName as string,
-            score: cosineSimilarity(queryEmbedding, c.embedding as number[]),
+            score: cosineSimilarity(queryEmbedding, JSON.parse(c.embedding as string)),
           }))
           .sort((a: { score: number }, b: { score: number }) => b.score - a.score)
           .slice(0, 5);
