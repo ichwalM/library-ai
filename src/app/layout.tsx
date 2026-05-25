@@ -38,6 +38,11 @@ export const metadata: Metadata = {
     title: "LibrariAI",
     description: "Tanya dokumenmu dengan AI. Zero Hallucination.",
   },
+  icons: {
+    icon: [
+      { url: "/img/logo-app.svg", type: "image/svg+xml" }
+    ],
+  },
 };
 
 // ─── Viewport ────────────────────────────────────────────────────────────────
