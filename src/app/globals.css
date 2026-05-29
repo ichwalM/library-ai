@@ -823,7 +823,18 @@ body {
   .chat-starters { padding: 0.5rem 0.75rem; }
   .chat-starters-grid { gap: 0.375rem; }
   .chat-starter-btn { font-size: 0.6875rem; }
-  .chat-avatar-user,
   .chat-avatar-ai { width: 1.75rem; height: 1.75rem; font-size: 0.6rem; }
 }
 
+/* ─── Animated Background Pattern ────────────────────────────────────────── */
+.neo-bg-pattern {
+  background-color: #FAFAFA;
+  background-image: radial-gradient(#000000 1px, transparent 1px);
+  background-size: 24px 24px;
+  animation: panBg 30s linear infinite;
+}
+
+@keyframes panBg {
+  0% { background-position: 0 0; }
+  100% { background-position: 240px 240px; }
+}

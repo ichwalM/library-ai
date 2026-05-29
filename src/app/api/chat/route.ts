@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
       (m: { role: string; content: string }) => m.role === "user"
     );
 
-    if (!lastUserMessage) {
+    if (!lastUserMessage) { 
       return NextResponse.json({ error: "Tidak ada pesan user" }, { status: 400 });
     }
 

@@ -84,8 +84,8 @@ async function Navbar() {
 async function HeroSection() {
   const session = await auth();
   return (
-    <section className="flex-1 flex items-center" aria-labelledby="hero-heading">
-      <div className="max-w-7xl mx-auto px-4 py-20 w-full">
+    <section className="flex-1 flex items-center neo-bg-pattern border-b-4 border-neo-black" aria-labelledby="hero-heading">
+      <div className="max-w-7xl mx-auto px-4 py-20 w-full relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div>
             <div className="neo-badge neo-badge-pink mb-6" aria-hidden="true">✦ RAG-Powered Academic Assistant ✦</div>
