@@ -1,4 +1,19 @@
-# Laporan Optimasi Performa — LibrariAI v2 (MySQL Edition)
+# LibrariAI v2 (MySQL Edition)
+
+**LibrariAI** adalah asisten akademik pintar berbasis AI dan teknologi RAG (*Retrieval-Augmented Generation*). Proyek ini dirancang khusus untuk merevolusi cara mahasiswa, dosen, dan peneliti berinteraksi dengan literatur akademik mereka. Dengan mengunggah tumpukan dokumen (PDF, DOCX, atau TXT), pengguna dapat langsung melakukan tanya jawab dengan isi dokumen tersebut tanpa perlu membaca ratusan halaman secara manual.
+
+## Masalah yang Diselesaikan
+
+Di lingkungan akademik dan penelitian, kita sering dihadapkan pada beberapa kendala utama yang sangat memakan waktu. Proyek ini hadir untuk menyelesaikan masalah-masalah tersebut:
+
+1. **Riset yang Melelahkan & Menyita Waktu:** Mencari landasan teori spesifik di puluhan file PDF atau laporan penelitian seringkali seperti mencari jarum di tumpukan jerami. LibrariAI membedah dokumen secara otomatis sehingga pengguna cukup bertanya langsung pada intinya.
+2. **Keterbatasan Pencarian Konvensional (Ctrl+F):** Pencarian biasa hanya mengandalkan kata kunci persis. LibrariAI menggunakan **Semantic Search** (Vector Embedding dengan Google Gemini), sehingga sistem dapat mencari berdasarkan "makna" atau konteks pertanyaan, bukan sekadar kata.
+3. **Halusinasi AI Generik (Mengarang Fakta):** AI chatbot publik sering kali memberikan jawaban halusinasi ketika tidak tahu jawabannya, yang sangat fatal untuk referensi skripsi/jurnal. LibrariAI menggunakan **Zero Hallucination Protocol**, di mana AI dikunci untuk HANYA menjawab berdasarkan isi dokumen yang diunggah. Jika tidak ada di dokumen, AI akan menjawab tidak tahu.
+4. **Privasi Data Riset:** Mengunggah draf jurnal/skripsi ke AI publik berisiko membocorkan ide penelitian. Dengan LibrariAI yang bisa di-host di arsitektur *Hybrid Cloud* (GCP + Local DB), data literatur Anda sepenuhnya berada di bawah kendali Anda.
+
+---
+
+## Laporan Optimasi Performa & Status Implementasi
 
 > **Status Build**: ✅ Sukses — `next build` selesai tanpa error  
 > **TypeScript**: ✅ `tsc --noEmit` — 0 errors  

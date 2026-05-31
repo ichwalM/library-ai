@@ -30,6 +30,18 @@ const nextConfig: NextConfig = {
   // ─── Performance: Caching Headers ──────────────────────────────────────────
   async headers() {
     return [
+      // ─── Mobile API v1: CORS + JSON content type ────────────────────────────
+      {
+        source: "/api/v1/:path*",
+        headers: [
+          { key: "Access-Control-Allow-Origin", value: "*" },
+          { key: "Access-Control-Allow-Methods", value: "GET, OPTIONS" },
+          { key: "Access-Control-Allow-Headers", value: "Content-Type, X-API-Key" },
+          { key: "Access-Control-Max-Age", value: "86400" },
+          // Short cache for list endpoints; chat/search should not be cached
+          { key: "Cache-Control", value: "no-store" },
+        ],
+      },
       // Static assets: aggressive long-term caching
       {
         source: "/_next/static/:path*",

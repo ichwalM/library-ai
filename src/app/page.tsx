@@ -12,9 +12,9 @@ export const metadata: Metadata = {
 
 const marqueeItems = [
   "📚 LIBRARI AI", "⚡ RAG POWERED", "🔒 ZERO HALLUCINATION", "🤖 GEMINI AI",
-  "📄 PDF · DOCX · TXT", "🏆 VIBE CODING 2026",
+  "📄 PDF · DOCX · TXT", "",
   "📚 LIBRARI AI", "⚡ RAG POWERED", "🔒 ZERO HALLUCINATION", "🤖 GEMINI AI",
-  "📄 PDF · DOCX · TXT", "🏆 VIBE CODING 2026",
+  "📄 PDF · DOCX · TXT", "",
 ];
 
 const problemSolution = [

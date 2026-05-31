@@ -1,0 +1,217 @@
+### LibrariAI Mobile API — HTTP Test File
+### Compatible with VS Code REST Client extension and IntelliJ HTTP Client
+###
+### How to use:
+###   1. VS Code: Install "REST Client" extension → click "Send Request" above each request
+###   2. Set BASE_URL and API_KEY variables below before running
+
+@BASE_URL = https://librariai-194076277787.asia-southeast1.run.app
+@API_KEY = librariai-mobile-k3y-2026
+@CATEGORY_ID = REPLACE_WITH_REAL_CATEGORY_ID
+@DOCUMENT_ID = REPLACE_WITH_REAL_DOCUMENT_ID
+
+###########################################################################
+# TEST 1: Health Check (No Auth Required)
+###########################################################################
+
+### T1 — Health Check
+GET {{BASE_URL}}/api/v1/health
+Accept: application/json
+
+###########################################################################
+# TEST 2: Authentication
+###########################################################################
+
+### T2a — Auth: Valid API Key via Header
+GET {{BASE_URL}}/api/v1/categories
+Accept: application/json
+X-API-Key: {{API_KEY}}
+
+###
+
+### T2b — Auth: Valid API Key via Query Param
+GET {{BASE_URL}}/api/v1/categories?apiKey={{API_KEY}}
+Accept: application/json
+
+###
+
+### T2c — Auth: Missing API Key → Expect 401
+GET {{BASE_URL}}/api/v1/categories
+Accept: application/json
+
+###
+
+### T2d — Auth: Wrong API Key → Expect 401
+GET {{BASE_URL}}/api/v1/categories
+Accept: application/json
+X-API-Key: wrong-invalid-key-12345
+
+###########################################################################
+# TEST 3: Categories
+###########################################################################
+
+### T3a — List All Categories (default pagination)
+GET {{BASE_URL}}/api/v1/categories
+Accept: application/json
+X-API-Key: {{API_KEY}}
+
+###
+
+### T3b — List Categories with Pagination
+GET {{BASE_URL}}/api/v1/categories?page=1&limit=5
+Accept: application/json
+X-API-Key: {{API_KEY}}
+
+###
+
+### T3c — List Categories with Search Filter
+GET {{BASE_URL}}/api/v1/categories?search=skripsi
+Accept: application/json
+X-API-Key: {{API_KEY}}
+
+###
+
+### T3d — Get Category Detail
+GET {{BASE_URL}}/api/v1/categories/{{CATEGORY_ID}}
+Accept: application/json
+X-API-Key: {{API_KEY}}
+
+###
+
+### T3e — Get Category Detail: Not Found → Expect 404
+GET {{BASE_URL}}/api/v1/categories/id-yang-tidak-ada-sama-sekali
+Accept: application/json
+X-API-Key: {{API_KEY}}
+
+###########################################################################
+# TEST 4: Documents
+###########################################################################
+
+### T4a — List All Documents
+GET {{BASE_URL}}/api/v1/documents
+Accept: application/json
+X-API-Key: {{API_KEY}}
+
+###
+
+### T4b — List Documents by Category
+GET {{BASE_URL}}/api/v1/documents?categoryId={{CATEGORY_ID}}
+Accept: application/json
+X-API-Key: {{API_KEY}}
+
+###
+
+### T4c — List Documents with Status Filter (ready)
+GET {{BASE_URL}}/api/v1/documents?status=ready&limit=5
+Accept: application/json
+X-API-Key: {{API_KEY}}
+
+###
+
+### T4d — List Documents with Status Filter (processing)
+GET {{BASE_URL}}/api/v1/documents?status=processing
+Accept: application/json
+X-API-Key: {{API_KEY}}
+
+###
+
+### T4e — List Documents: Invalid Status → Expect 400
+GET {{BASE_URL}}/api/v1/documents?status=unknown
+Accept: application/json
+X-API-Key: {{API_KEY}}
+
+###
+
+### T4f — Get Document Detail
+GET {{BASE_URL}}/api/v1/documents/{{DOCUMENT_ID}}
+Accept: application/json
+X-API-Key: {{API_KEY}}
+
+###
+
+### T4g — Get Document Detail: Not Found → Expect 404
+GET {{BASE_URL}}/api/v1/documents/id-dokumen-tidak-ada
+Accept: application/json
+X-API-Key: {{API_KEY}}
+
+###########################################################################
+# TEST 5: Semantic Search
+###########################################################################
+
+### T5a — Semantic Search (basic)
+GET {{BASE_URL}}/api/v1/search?q=metode+penelitian+kualitatif&categoryId={{CATEGORY_ID}}
+Accept: application/json
+X-API-Key: {{API_KEY}}
+
+###
+
+### T5b — Semantic Search with topK
+GET {{BASE_URL}}/api/v1/search?q=kesimpulan+dan+saran&categoryId={{CATEGORY_ID}}&topK=3
+Accept: application/json
+X-API-Key: {{API_KEY}}
+
+###
+
+### T5c — Semantic Search: Missing q → Expect 400
+GET {{BASE_URL}}/api/v1/search?categoryId={{CATEGORY_ID}}
+Accept: application/json
+X-API-Key: {{API_KEY}}
+
+###
+
+### T5d — Semantic Search: Missing categoryId → Expect 400
+GET {{BASE_URL}}/api/v1/search?q=metode+penelitian
+Accept: application/json
+X-API-Key: {{API_KEY}}
+
+###
+
+### T5e — Semantic Search: Category Not Found → Expect 404
+GET {{BASE_URL}}/api/v1/search?q=test&categoryId=kategori-tidak-ada
+Accept: application/json
+X-API-Key: {{API_KEY}}
+
+###########################################################################
+# TEST 6: AI Chat
+###########################################################################
+
+### T6a — AI Chat: First Message (no history)
+GET {{BASE_URL}}/api/v1/chat?message=Apa+isi+utama+dari+dokumen+dalam+koleksi+ini%3F&categoryId={{CATEGORY_ID}}
+Accept: application/json
+X-API-Key: {{API_KEY}}
+
+###
+
+### T6b — AI Chat: Multi-turn (paste historyForNextRequest from T6a response)
+# Replace HISTORY_BASE64 with value of data.historyForNextRequest from previous response
+GET {{BASE_URL}}/api/v1/chat?message=Bisa+jelaskan+lebih+detail%3F&categoryId={{CATEGORY_ID}}&history=HISTORY_BASE64
+Accept: application/json
+X-API-Key: {{API_KEY}}
+
+###
+
+### T6c — AI Chat: Missing message → Expect 400
+GET {{BASE_URL}}/api/v1/chat?categoryId={{CATEGORY_ID}}
+Accept: application/json
+X-API-Key: {{API_KEY}}
+
+###
+
+### T6d — AI Chat: Missing categoryId → Expect 400
+GET {{BASE_URL}}/api/v1/chat?message=Apa+ini%3F
+Accept: application/json
+X-API-Key: {{API_KEY}}
+
+###
+
+### T6e — AI Chat: Category Not Found → Expect 404
+GET {{BASE_URL}}/api/v1/chat?message=test&categoryId=kategori-tidak-ada
+Accept: application/json
+X-API-Key: {{API_KEY}}
+
+###
+
+### T6f — AI Chat: Invalid history base64 → Expect 400
+GET {{BASE_URL}}/api/v1/chat?message=test&categoryId={{CATEGORY_ID}}&history=INVALID!!!BASE64
+Accept: application/json
+X-API-Key: {{API_KEY}}
